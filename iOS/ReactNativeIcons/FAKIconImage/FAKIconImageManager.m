@@ -18,7 +18,7 @@ RCT_EXPORT_MODULE()
 
 RCT_REMAP_VIEW_PROPERTY(size, iconSize, NSNumber);
 RCT_EXPORT_VIEW_PROPERTY(name, NSString);
-RCT_EXPORT_VIEW_PROPERTY(color, NSString);
+RCT_EXPORT_VIEW_PROPERTY(color, NSNumber);
 
 RCT_CUSTOM_VIEW_PROPERTY(icon, NSDictionary, FAKIconImage)
 {
@@ -29,12 +29,12 @@ RCT_CUSTOM_VIEW_PROPERTY(icon, NSDictionary, FAKIconImage)
             NSString *iconString = iconDict[@"name"];
             UIColor *color = iconDict[@"color"] ? [RCTConvert UIColor:iconDict[@"color"]] : view.tintColor;
             CGFloat size = [iconDict[@"size"] floatValue];
-            
+
             NSString *theIconName = iconString;
             NSArray *parts = [theIconName componentsSeparatedByString:@"|"];
             NSString *fontPrefix = parts[0];
             NSString *iconIdentifier = parts[1];
-            
+
             id target;
             if([fontPrefix isEqualToString:@"fontawesome"]) {
                 target = [FAKFontAwesome class];
@@ -49,9 +49,9 @@ RCT_CUSTOM_VIEW_PROPERTY(icon, NSDictionary, FAKIconImage)
             } else if([fontPrefix isEqualToString:@"octicons"]) {
                 target = [FAKOcticons class];
             }
-            
+
             SEL selector = NSSelectorFromString([NSString stringWithFormat:@"%@IconWithSize:",[self camelcase:iconIdentifier]]);
-            
+
             if(!target || ![target respondsToSelector:selector]) {
                 if(target) {
                     NSLog(@"No icon '%@' in '%@' icon font", iconIdentifier, fontPrefix);
@@ -62,20 +62,20 @@ RCT_CUSTOM_VIEW_PROPERTY(icon, NSDictionary, FAKIconImage)
                 }
                 return;
             }
-            
+
             NSInvocation *inv = [NSInvocation invocationWithMethodSignature:[target methodSignatureForSelector:selector]];
             [inv setSelector:selector];
             [inv setTarget:target];
             [inv setArgument:&size atIndex:2]; //arguments 0 and 1 are self and _cmd respectively, automatically set by NSInvocation
             [inv retainArguments];
             [inv invoke];
-            
+
             CFTypeRef result;
             [inv getReturnValue:&result];
-            
+
             FAKIcon *icon = (__bridge id)result;
             [icon setAttributes:@{NSForegroundColorAttributeName: color}];
-            
+
             UIImage *image = [icon imageWithSize:CGSizeMake(size,size)];
             dispatch_async(dispatch_get_main_queue(), ^{
                 [view setContentMode:UIViewContentModeCenter];
@@ -89,7 +89,7 @@ RCT_CUSTOM_VIEW_PROPERTY(icon, NSDictionary, FAKIconImage)
 {
     NSArray *components = [stringToCamelcase componentsSeparatedByString:@"-"];
     NSMutableString *output = [NSMutableString string];
-    
+
     for (NSUInteger i = 0; i < components.count; i++) {
         if (i == 0) {
             [output appendString:components[i]];
@@ -97,7 +97,7 @@ RCT_CUSTOM_VIEW_PROPERTY(icon, NSDictionary, FAKIconImage)
             [output appendString:[components[i] capitalizedString]];
         }
     }
-    
+
     return [NSString stringWithString:output];
 }
 
